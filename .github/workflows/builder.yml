@@ -36,7 +36,7 @@ jobs:
           echo "Using Source Directory: $SRC_DIR"
           ls -l "$SRC_DIR"
           mkdir -p build
-          cd "$SRC_DIR"
+          cd "$SRC_DIR/solver"
           gcc -o epanet2 *.c
           mkdir -p ~/epanet2-deb/usr/local/bin
           mv epanet2 ~/epanet2-deb/usr/local/bin/
