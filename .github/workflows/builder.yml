@@ -14,18 +14,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout the workflow repository
         uses: actions/checkout@v4
 
-      - name: List Repository Files (Debugging)
-        run: ls -R
+      - name: Clone EPANET 2.2 Repository
+        run: |
+          git clone https://github.com/USEPA/EPANET2.2.git epanet
+          cd epanet
+          ls -R
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: sudo apt update && sudo apt install -y build-essential dh-make debhelper devscripts fakeroot
 
       - name: Find EPANET Source Directory
         run: |
-          find . -type d -name "src" | tee src_directory.txt
+          find epanet -type d -name "src" | tee src_directory.txt
 
       - name: Compile EPANET 2.2
         run: |
@@ -55,7 +58,7 @@ jobs:
           dpkg-deb --build ~/epanet2-deb
           mv ~/epanet2-deb.deb epanet2_2.2.0_amd64.deb
 
-      - name: Upload .deb package as artifact
+      - name: Upload .deb Package as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: epanet2-deb
