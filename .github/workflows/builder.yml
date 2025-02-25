@@ -34,6 +34,7 @@ jobs:
         run: |
           SRC_DIR=$(cat src_directory.txt | head -n 1)
           echo "Using Source Directory: $SRC_DIR"
+          ls -l "$SRC_DIR"
           mkdir -p build
           cd "$SRC_DIR"
           gcc -o epanet2 *.c
