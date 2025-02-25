@@ -35,11 +35,11 @@ jobs:
           SRC_DIR=$(cat src_directory.txt | head -n 1)
           echo "Using Source Directory: $SRC_DIR"
           ls -l "$SRC_DIR"
-          mkdir -p build
+          mkdir -p build/epanet2
           cd "$SRC_DIR/solver"
-          gcc -o epanet2 *.c
+          gcc -I../../include -o build/epanet2 *.c
           mkdir -p ~/epanet2-deb/usr/local/bin
-          mv epanet2 ~/epanet2-deb/usr/local/bin/
+          mv build/epanet2 ~/epanet2-deb/usr/local/bin/
 
       - name: Create Debian Package
         run: |
