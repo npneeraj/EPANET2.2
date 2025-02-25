@@ -17,14 +17,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: List Repository Files (Debugging)
+        run: ls -R
+
       - name: Install dependencies
         run: sudo apt update && sudo apt install -y build-essential dh-make debhelper devscripts fakeroot
 
+      - name: Find EPANET Source Directory
+        run: |
+          find . -type d -name "src" | tee src_directory.txt
+
       - name: Compile EPANET 2.2
         run: |
+          SRC_DIR=$(cat src_directory.txt | head -n 1)
+          echo "Using Source Directory: $SRC_DIR"
           mkdir -p build
-          cd SRC_engines/EPANET/src
-          gcc -o epanet2 epanet.c hydraul.c quality.c smatrix.c models.c report.c input1.c input2.c output.c
+          cd "$SRC_DIR"
+          gcc -o epanet2 *.c
           mkdir -p ~/epanet2-deb/usr/local/bin
           mv epanet2 ~/epanet2-deb/usr/local/bin/
 
