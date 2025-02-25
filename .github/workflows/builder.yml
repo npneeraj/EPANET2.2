@@ -1,0 +1,53 @@
+name: Build EPANET 2.2 Debian Package
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-deb:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: sudo apt update && sudo apt install -y build-essential dh-make debhelper devscripts fakeroot
+
+      - name: Compile EPANET 2.2
+        run: |
+          mkdir -p build
+          cd SRC_engines/EPANET/src
+          gcc -o epanet2 epanet.c hydraul.c quality.c smatrix.c models.c report.c input1.c input2.c output.c
+          mkdir -p ~/epanet2-deb/usr/local/bin
+          mv epanet2 ~/epanet2-deb/usr/local/bin/
+
+      - name: Create Debian Package
+        run: |
+          mkdir -p ~/epanet2-deb/DEBIAN
+          cat <<EOF > ~/epanet2-deb/DEBIAN/control
+          Package: epanet2
+          Version: 2.2.0
+          Section: utils
+          Priority: optional
+          Architecture: amd64
+          Maintainer: ByteSync <nirajpanwar24@gmail.com>
+          Description: EPANET 2.2 - Water Distribution Modeling Software
+           A public domain software package for water distribution system modeling and simulation.
+          EOF
+          chmod -R 755 ~/epanet2-deb
+          chmod 644 ~/epanet2-deb/DEBIAN/control
+          dpkg-deb --build ~/epanet2-deb
+          mv ~/epanet2-deb.deb epanet2_2.2.0_amd64.deb
+
+      - name: Upload .deb package as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: epanet2-deb
+          path: epanet2_2.2.0_amd64.deb
