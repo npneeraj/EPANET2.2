@@ -37,7 +37,8 @@ jobs:
           ls -l "$SRC_DIR"
           mkdir -p build
           cd "$SRC_DIR/solver"
-          gcc -I../../include -o build/epanet2 *.c
+          
+          gcc -I../../include -I../../../include -o build/epanet2 *.c
           mkdir -p ~/epanet2-deb/usr/local/bin
           mv build/epanet2 ~/epanet2-deb/usr/local/bin/
 
