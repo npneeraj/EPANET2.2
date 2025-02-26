@@ -18,12 +18,14 @@ jobs:
           cd epanet
           git submodule update --init --recursive
 
-      - name: Configure and Build with CMake
+      - name: Build EPANET with CMake
         run: |
-          mkdir -p epanet/build
-          cd epanet/build
-          cmake -DCMAKE_BUILD_TYPE=Release ..
-          cmake --build .
+          sudo apt install cmake build-essential
+          cd epanet/SRC_engines/
+          mkdir -p build && cd build
+          cmake ..
+          make
+
 
       - name: Package as .deb
         run: |
