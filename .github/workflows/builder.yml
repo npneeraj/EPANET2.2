@@ -20,101 +20,27 @@ jobs:
 
       - name: Create missing package_info.txt
         run: |
+          cd epanet/SRC_engines/
           echo "Package Maintainer: EPANET Team" > package_info.txt
           echo "Version: 2.2.0" >> package_info.txt
           echo "Description: EPANET 2.2 Water Network Analysis" >> package_info.txt
-          cat package_info.txt
+          mv package_info.txt build/package_info.txt
+          cat build/package_info.txt
 
       - name: Configure and Build EPANET
         run: |
           cd epanet/SRC_engines/
           mkdir -p build && cd build
-          
           cmake .. -G Ninja -DCPACK_PACKAGE_CONTACT="nirajpanwar24@gmail.com"
           ninja
-
 
       - name: Package as .deb
         run: |
           cd epanet/SRC_engines/build
           cpack -G DEB  # Creates a .deb package
 
-
-  
-
       - name: Upload Package as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: epanet-deb-package
-          path: epanet/build/*.deb
-
-
-
-
-# name: Build EPANET 2.2 Debian Package
-
-# on:
-#   push:
-#     branches:
-#       - main
-#   pull_request:
-#     branches:
-#       - main
-#   workflow_dispatch:
-
-# jobs:
-#   build-deb:
-#     runs-on: ubuntu-latest
-
-#     steps:
-#       - name: Checkout the workflow repository
-#         uses: actions/checkout@v4
-
-#       - name: Clone EPANET 2.2 Repository
-#         run: |
-#           git clone https://github.com/USEPA/EPANET2.2.git epanet
-#           cd epanet
-#           ls -R
-
-#       - name: Install Dependencies
-#         run: sudo apt update && sudo apt install -y build-essential dh-make debhelper devscripts fakeroot
-
-#       - name: Find EPANET Source Directory
-#         run: |
-#           find epanet -type d -name "src" | tee src_directory.txt
-
-#       - name: Compile EPANET 2.2
-#         run: |
-#           SRC_DIR=$(cat src_directory.txt | head -n 1)
-#           echo "Using Source Directory: $SRC_DIR"
-#           ls -l "$SRC_DIR"
-#           mkdir -p build
-#           cd "$SRC_DIR/solver"
-          
-#           gcc -I../../include -I../../../include -o build/epanet2 *.c
-#           mkdir -p ~/epanet2-deb/usr/local/bin
-#           mv build/epanet2 ~/epanet2-deb/usr/local/bin/
-
-#       - name: Create Debian Package
-#         run: |
-#           mkdir -p ~/epanet2-deb/DEBIAN
-#           cat <<EOF > ~/epanet2-deb/DEBIAN/control
-#           Package: epanet2
-#           Version: 2.2.0
-#           Section: utils
-#           Priority: optional
-#           Architecture: amd64
-#           Maintainer: ByteSync <nirajpanwar24@gmail.com>
-#           Description: EPANET 2.2 - Water Distribution Modeling Software
-#            A public domain software package for water distribution system modeling and simulation.
-#           EOF
-#           chmod -R 755 ~/epanet2-deb
-#           chmod 644 ~/epanet2-deb/DEBIAN/control
-#           dpkg-deb --build ~/epanet2-deb
-#           mv ~/epanet2-deb.deb epanet2_2.2.0_amd64.deb
-
-#       - name: Upload .deb Package as Artifact
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: epanet2-deb
-#           path: epanet2_2.2.0_amd64.deb
+          path: epanet/SRC_engines/build/*.deb
