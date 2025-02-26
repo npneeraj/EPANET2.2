@@ -1,67 +1,123 @@
-name: Build EPANET 2.2 Debian Package
+name: Build and Run EPANET with Wine
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:
+on: [push, pull_request]
 
 jobs:
-  build-deb:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest  # Ubuntu-based, similar to Linux Mint
 
     steps:
-      - name: Checkout the workflow repository
-        uses: actions/checkout@v4
-
-      - name: Clone EPANET 2.2 Repository
+      - name: Install Wine and Dependencies
         run: |
-          git clone https://github.com/USEPA/EPANET2.2.git epanet
-          cd epanet
-          ls -R
+          sudo dpkg --add-architecture i386
+          sudo apt update
+          sudo apt install -y wine64 wine32 winbind wget unzip
 
-      - name: Install Dependencies
-        run: sudo apt update && sudo apt install -y build-essential dh-make debhelper devscripts fakeroot
-
-      - name: Find EPANET Source Directory
+      - name: Download EPANET Windows Version
         run: |
-          find epanet -type d -name "src" | tee src_directory.txt
+          wget -O epanet.zip "https://github.com/USEPA/EPANET2.2/releases/latest/download/EPANET2.2.zip"
+          unzip epanet.zip -d epanet-windows
 
-      - name: Compile EPANET 2.2
+      - name: Run EPANET with Wine
         run: |
-          SRC_DIR=$(cat src_directory.txt | head -n 1)
-          echo "Using Source Directory: $SRC_DIR"
-          ls -l "$SRC_DIR"
-          mkdir -p build
-          cd "$SRC_DIR/solver"
+          wine epanet-windows/epanet2.exe
+
+      - name: Create a .deb Package (Optional)
+        run: |
+          mkdir -p epanet-wine/usr/local/bin
+          cp epanet-windows/epanet2.exe epanet-wine/usr/local/bin/epanet2.exe
+          echo -e "#!/bin/bash\nwine /usr/local/bin/epanet2.exe \"\$@\"" > epanet-wine/usr/local/bin/epanet
+          chmod +x epanet-wine/usr/local/bin/epanet
           
-          gcc -I../../include -I../../../include -o build/epanet2 *.c
-          mkdir -p ~/epanet2-deb/usr/local/bin
-          mv build/epanet2 ~/epanet2-deb/usr/local/bin/
+          mkdir -p epanet-wine/DEBIAN
+          echo "Package: epanet-wine
+          Version: 2.2
+          Architecture: all
+          Maintainer: Your Name <your@email.com>
+          Description: EPANET 2.2 running via Wine" > epanet-wine/DEBIAN/control
 
-      - name: Create Debian Package
-        run: |
-          mkdir -p ~/epanet2-deb/DEBIAN
-          cat <<EOF > ~/epanet2-deb/DEBIAN/control
-          Package: epanet2
-          Version: 2.2.0
-          Section: utils
-          Priority: optional
-          Architecture: amd64
-          Maintainer: ByteSync <nirajpanwar24@gmail.com>
-          Description: EPANET 2.2 - Water Distribution Modeling Software
-           A public domain software package for water distribution system modeling and simulation.
-          EOF
-          chmod -R 755 ~/epanet2-deb
-          chmod 644 ~/epanet2-deb/DEBIAN/control
-          dpkg-deb --build ~/epanet2-deb
-          mv ~/epanet2-deb.deb epanet2_2.2.0_amd64.deb
+          dpkg-deb --build epanet-wine epanet-wine.deb
 
-      - name: Upload .deb Package as Artifact
+      - name: Upload .deb Package
         uses: actions/upload-artifact@v4
         with:
-          name: epanet2-deb
-          path: epanet2_2.2.0_amd64.deb
+          name: epanet-wine-package
+          path: epanet-wine.deb
+
+
+
+
+
+
+
+
+
+
+
+# name: Build EPANET 2.2 Debian Package
+
+# on:
+#   push:
+#     branches:
+#       - main
+#   pull_request:
+#     branches:
+#       - main
+#   workflow_dispatch:
+
+# jobs:
+#   build-deb:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout the workflow repository
+#         uses: actions/checkout@v4
+
+#       - name: Clone EPANET 2.2 Repository
+#         run: |
+#           git clone https://github.com/USEPA/EPANET2.2.git epanet
+#           cd epanet
+#           ls -R
+
+#       - name: Install Dependencies
+#         run: sudo apt update && sudo apt install -y build-essential dh-make debhelper devscripts fakeroot
+
+#       - name: Find EPANET Source Directory
+#         run: |
+#           find epanet -type d -name "src" | tee src_directory.txt
+
+#       - name: Compile EPANET 2.2
+#         run: |
+#           SRC_DIR=$(cat src_directory.txt | head -n 1)
+#           echo "Using Source Directory: $SRC_DIR"
+#           ls -l "$SRC_DIR"
+#           mkdir -p build
+#           cd "$SRC_DIR/solver"
+          
+#           gcc -I../../include -I../../../include -o build/epanet2 *.c
+#           mkdir -p ~/epanet2-deb/usr/local/bin
+#           mv build/epanet2 ~/epanet2-deb/usr/local/bin/
+
+#       - name: Create Debian Package
+#         run: |
+#           mkdir -p ~/epanet2-deb/DEBIAN
+#           cat <<EOF > ~/epanet2-deb/DEBIAN/control
+#           Package: epanet2
+#           Version: 2.2.0
+#           Section: utils
+#           Priority: optional
+#           Architecture: amd64
+#           Maintainer: ByteSync <nirajpanwar24@gmail.com>
+#           Description: EPANET 2.2 - Water Distribution Modeling Software
+#            A public domain software package for water distribution system modeling and simulation.
+#           EOF
+#           chmod -R 755 ~/epanet2-deb
+#           chmod 644 ~/epanet2-deb/DEBIAN/control
+#           dpkg-deb --build ~/epanet2-deb
+#           mv ~/epanet2-deb.deb epanet2_2.2.0_amd64.deb
+
+#       - name: Upload .deb Package as Artifact
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: epanet2-deb
+#           path: epanet2_2.2.0_amd64.deb
