@@ -1,55 +1,40 @@
-name: Build and Run EPANET with Wine
+name: Build EPANET 2.2 and Create .deb Package
 
 on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # Ubuntu-based, similar to Linux Mint
+    runs-on: ubuntu-latest  # Adjust if needed for Linux Mint compatibility
 
     steps:
-      - name: Install Wine and Dependencies
+      - name: Install Dependencies
         run: |
-          sudo dpkg --add-architecture i386
           sudo apt update
-          sudo apt install -y wine64 wine32 winbind wget unzip
+          sudo apt install -y build-essential cmake ninja-build dpkg-dev fakeroot git
 
-      - name: Download EPANET Windows Version
+      - name: Clone EPANET Source Code
         run: |
-          wget -O epanet.zip "https://github.com/USEPA/EPANET2.2/releases/latest/download/EPANET2.2.zip"
-          unzip epanet.zip -d epanet-windows
+          git clone --recursive https://github.com/USEPA/EPANET2.2.git epanet
+          cd epanet
+          git submodule update --init --recursive
 
-      - name: Run EPANET with Wine
+      - name: Configure and Build with CMake
         run: |
-          wine epanet-windows/epanet2.exe
+          mkdir -p epanet/build
+          cd epanet/build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+          cmake --build .
 
-      - name: Create a .deb Package (Optional)
+      - name: Package as .deb
         run: |
-          mkdir -p epanet-wine/usr/local/bin
-          cp epanet-windows/epanet2.exe epanet-wine/usr/local/bin/epanet2.exe
-          echo -e "#!/bin/bash\nwine /usr/local/bin/epanet2.exe \"\$@\"" > epanet-wine/usr/local/bin/epanet
-          chmod +x epanet-wine/usr/local/bin/epanet
-          
-          mkdir -p epanet-wine/DEBIAN
-          echo "Package: epanet-wine
-          Version: 2.2
-          Architecture: all
-          Maintainer: Your Name <your@email.com>
-          Description: EPANET 2.2 running via Wine" > epanet-wine/DEBIAN/control
+          cd epanet/build
+          cpack -G DEB  # Creates a .deb package
 
-          dpkg-deb --build epanet-wine epanet-wine.deb
-
-      - name: Upload .deb Package
+      - name: Upload Package as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: epanet-wine-package
-          path: epanet-wine.deb
-
-
-
-
-
-
-
+          name: epanet-deb-package
+          path: epanet/build/*.deb
 
 
 
