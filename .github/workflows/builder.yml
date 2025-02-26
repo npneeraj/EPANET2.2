@@ -21,6 +21,7 @@ jobs:
       - name: Create missing package_info.txt
         run: |
           cd epanet/SRC_engines/
+          mkdir -p build
           echo "Package Maintainer: EPANET Team" > package_info.txt
           echo "Version: 2.2.0" >> package_info.txt
           echo "Description: EPANET 2.2 Water Network Analysis" >> package_info.txt
