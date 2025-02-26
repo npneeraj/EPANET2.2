@@ -18,19 +18,29 @@ jobs:
           cd epanet
           git submodule update --init --recursive
 
-      - name: Build EPANET with CMake
+      - name: Create missing package_info.txt
         run: |
-          sudo apt install cmake build-essential
+          echo "Package Maintainer: EPANET Team" > package_info.txt
+          echo "Version: 2.2.0" >> package_info.txt
+          echo "Description: EPANET 2.2 Water Network Analysis" >> package_info.txt
+          cat package_info.txt
+
+      - name: Configure and Build EPANET
+        run: |
           cd epanet/SRC_engines/
           mkdir -p build && cd build
-          cmake ..
-          make
+          
+          cmake .. -G Ninja -DCPACK_PACKAGE_CONTACT="nirajpanwar24@gmail.com"
+          ninja
 
 
       - name: Package as .deb
         run: |
           cd epanet/SRC_engines/build
           cpack -G DEB  # Creates a .deb package
+
+
+  
 
       - name: Upload Package as Artifact
         uses: actions/upload-artifact@v4
